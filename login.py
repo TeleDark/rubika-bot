@@ -127,4 +127,4 @@ data = {
 }
 
 res = rb.maker(data,"registerDevice")
-print(f"{Style.BRIGHT}{GREEN}You logged in\n{PLAIN}")
+print(f"{Style.BRIGHT}{GREEN}You logged in{PLAIN}")
