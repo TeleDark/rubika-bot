@@ -63,6 +63,15 @@ def upload(data:dict):
         data_msg_id = data['data_msg_id']
         my_guid = data['t_guid']    
 
+        if mode_send == 'music':
+            if not file_name[-3:] == 'mp3':
+                rb.send_message(my_guid,'لطفا پسوند نام فایل را صحیح وارد کنید',data_msg_id)
+                return
+        if mode_send == 'video':
+            if not file_name[-3:] == 'mp4':
+                rb.send_message(my_guid,'لطفا پسوند نام فایل را صحیح وارد کنید',data_msg_id)
+                return
+
         data_msg = rb.get_message_by_id(my_guid,[data_msg_id])[0]
         data_text = str(data_msg['text'] if 'text' in data_msg else "")
         
@@ -97,12 +106,9 @@ def upload(data:dict):
             else:
                 music_time = get_music_time(file_name)
             
-            if not music_per:
-                rb.send_message(my_guid,'برای ارسال آهنگ لازم است نام خواننده را هم وارد کنید\n برای مثال:\n music_per : Reza Bahram',data_msg_id)
-            if music_per:
-                rb.send_music(target_guid,int(music_time),upload_data,file_size,file_name,music_per)
-                os.remove(file_name)
-                rb.send_message(my_guid,'آهنگ ارسال شد ✅',data_msg_id)
+            rb.send_music(target_guid,int(music_time),upload_data,file_size,file_name,music_per)
+            os.remove(file_name)
+            rb.send_message(my_guid,'آهنگ ارسال شد ✅',data_msg_id)
             return
         elif mode_send.startswith('voice'):
             if 'file_inline' in data_msg and msg_file_data['type'] != "File":

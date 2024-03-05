@@ -63,7 +63,7 @@ for chat in rb.get_chats():
 
 
 while True:
-    time.sleep(10)
+    time.sleep(5)
     for guid in my_guids:
         try:
             msgs = rb.get_message(guid,to_max=True,min_id=my_guids[guid])
