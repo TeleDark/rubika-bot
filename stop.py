@@ -21,4 +21,4 @@ for i in os.listdir():
     if i.endswith(".mp3") or i.endswith(".mp4") or i.endswith(".mkv") or i.endswith(".mp3"):
         os.remove(i)
 
-print(f"{Style.BRIGHT}{GREEN}The bot has been Stopped.\n{PLAIN}")
+print(f"{Style.BRIGHT}{GREEN}The bot has been Stopped{PLAIN}")
