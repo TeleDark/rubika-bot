@@ -1,0 +1,4 @@
+pillow==9.0.1
+opencv-python==4.5.5.64
+mutagen==1.47.0
+pycryptodome==3.10.1
