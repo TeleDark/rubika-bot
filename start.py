@@ -12,4 +12,4 @@ for i in os.listdir():
 os.popen('nohup python3 -u '+file_name +
          ' > out.txt 2> error.txt &')
 
-print(f"{Style.BRIGHT}{GREEN}The bot has been Started.\n{PLAIN}")
+print(f"{Style.BRIGHT}{GREEN}The bot has been Started{PLAIN}")
