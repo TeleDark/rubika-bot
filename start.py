@@ -6,6 +6,4 @@ for i in os.listdir():
         file_name = i
         break
 
-os.popen('nohup python3 -u '+file_name+' > out.txt &')
-
-
+os.popen('nohup python3 -u '+file_name+' > out.txt 2> error.txt &')
