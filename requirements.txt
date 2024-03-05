@@ -3,3 +3,4 @@ opencv-python==4.5.5.64
 mutagen==1.47.0
 pycryptodome==3.10.1
 requests==2.31.0
+colorama==0.4.6
