@@ -78,4 +78,5 @@ while True:
                         rb.send_message(guid,'error',reply=msg['message_id'])
                     time.sleep(5)
         except Exception as e:
-            print('error in main : ',e)
+            rb.send_message(guid,'لطفا از صحیح بودن GUID مطمئن شوید',reply=msg['message_id'])
+            print('guid error: ',e)

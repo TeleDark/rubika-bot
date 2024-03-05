@@ -56,12 +56,13 @@ def delete_empty(text:str):
 def upload(data:dict):
     try:
         mode_send:str = data['mode']
+        print(data)
         file_name = (data['file_name'] if 'file_name' in data else None)
         target_guid = (data['target'] if 'target' in data else None)
         music_per = (data['music_per'] if 'music_per' in data else None)
         data_msg_id = data['data_msg_id']
         my_guid = data['t_guid']    
-        
+
         data_msg = rb.get_message_by_id(my_guid,[data_msg_id])[0]
         data_text = str(data_msg['text'] if 'text' in data_msg else "")
         
@@ -70,18 +71,23 @@ def upload(data:dict):
             file_size = http.buffer_size
             if file_size == None or http.response_code != 200:
                 raise Exception('error in base http')
-            rb.send_message(my_guid,'دانلود شروع شد...',data_msg_id)
-            http.download(file_name)
+            
+            if mode_send == 'music' and not music_per:
+                rb.send_message(my_guid,'برای ارسال آهنگ لازم است نام خواننده را هم وارد کنید\n برای مثال:\n music_per : Reza Bahram',data_msg_id)
+                return
+            else: 
+                rb.send_message(my_guid,'درحال دانلود فایل از اینترنت ⬇️',data_msg_id)
+                http.download(file_name)
         elif 'file_inline' in data_msg:
             msg_file_data = data_msg['file_inline']
             if not file_name:
                 file_name = msg_file_data['file_name']
-            rb.send_message(my_guid,'دانلود فایل شروع شد...',data_msg_id)
+            rb.send_message(my_guid,'درحال دانلود فایل ⬇️',data_msg_id)
             file_size = rb.download(msg_file_data,file_name)
         else:
             rb.send_message(my_guid,f'دانلود فایل با خطا مواجه شد !',data_msg_id)
             raise Exception('file error')
-        rb.send_message(my_guid,'آپلود فایل شروع شد...',data_msg_id)
+        rb.send_message(my_guid,'درحال آپلود فایل ⬆️',data_msg_id)
         
         upload_data = rb.upload_file(file_name)
         
@@ -90,9 +96,13 @@ def upload(data:dict):
                 music_time = msg_file_data['time']
             else:
                 music_time = get_music_time(file_name)
-            rb.send_music(target_guid,int(music_time),upload_data,file_size,file_name,music_per)
-            os.remove(file_name)
-            rb.send_message(my_guid,'آهنگ ارسال شد',data_msg_id)
+            
+            if not music_per:
+                rb.send_message(my_guid,'برای ارسال آهنگ لازم است نام خواننده را هم وارد کنید\n برای مثال:\n music_per : Reza Bahram',data_msg_id)
+            if music_per:
+                rb.send_music(target_guid,int(music_time),upload_data,file_size,file_name,music_per)
+                os.remove(file_name)
+                rb.send_message(my_guid,'آهنگ ارسال شد ✅',data_msg_id)
             return
         elif mode_send.startswith('voice'):
             if 'file_inline' in data_msg and msg_file_data['type'] != "File":
@@ -101,7 +111,7 @@ def upload(data:dict):
                 music_time = get_music_time(file_name)*1000
             rb.send_voice(target_guid,upload_data,file_name,file_size,music_time)
             os.remove(file_name)
-            rb.send_message(my_guid,'ویس ارسال شد',data_msg_id)
+            rb.send_message(my_guid,'ویس ارسال شد ✅',data_msg_id)
             return
         elif mode_send.startswith('video'):
             if 'file_inline' in data_msg and msg_file_data['type'] != "File":
@@ -114,12 +124,12 @@ def upload(data:dict):
                 thumb_str = base64.encodebytes(thumb_bytes).decode()
             rb.send_video(target_guid,upload_data,file_name,height,width,file_size,thumb_str,duration)
             os.remove(file_name)
-            rb.send_message(my_guid,'ویدیو ارسال شد',data_msg_id)
+            rb.send_message(my_guid,'ویدیو ارسال شد ✅',data_msg_id)
             return
         elif mode_send.startswith('file'):
             rb.send_document(target_guid,upload_data,file_size,file_name)
             os.remove(file_name)
-            rb.send_message(my_guid,'فایل ارسال شد',data_msg_id)
+            rb.send_message(my_guid,'فایل ارسال شد ✅',data_msg_id)
             return
         else:
             raise Exception('mode error')
@@ -129,7 +139,7 @@ def upload(data:dict):
         except:
             print("remove file error:", e)
         try:
-            rb.send_message(my_guid, f"error {e}",data_msg_id)
+            rb.send_message(my_guid, f"نوع فایل رو اشتباه وارد کردید، لطفا از صحیح بودن mode فایل مطمئن شوید {e}",data_msg_id)
         except:
             print("upload file error:", e)
         traceback.print_exc()

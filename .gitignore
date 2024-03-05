@@ -162,3 +162,5 @@ cython_debug/
 # ignore File
 error.txt
 out.txt
+guids.txt
+account

@@ -10,6 +10,6 @@ for i in os.listdir():
         break
 
 os.popen('nohup python3 -u '+file_name +
-         ' > out.txt 2> error.txt &')
+         ' > out.txt 2> /dev/null &')
 
 print(f"{Style.BRIGHT}{GREEN}The bot has been Started{PLAIN}")
