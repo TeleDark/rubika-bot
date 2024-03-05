@@ -65,11 +65,11 @@ def upload(data:dict):
 
         if mode_send == 'music':
             if not file_name[-3:] == 'mp3':
-                rb.send_message(my_guid,'لطفا پسوند نام فایل را صحیح وارد کنید',data_msg_id)
+                rb.send_message(my_guid,'لطفا پسوند نام فایل را صحیح وارد کنید (مود فایل میوزیک است)',data_msg_id)
                 return
         if mode_send == 'video':
             if not file_name[-3:] == 'mp4':
-                rb.send_message(my_guid,'لطفا پسوند نام فایل را صحیح وارد کنید',data_msg_id)
+                rb.send_message(my_guid,'لطفا پسوند نام فایل را صحیح وارد کنید (مود فایل ویدیو است)',data_msg_id)
                 return
 
         data_msg = rb.get_message_by_id(my_guid,[data_msg_id])[0]
