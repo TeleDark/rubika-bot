@@ -6,6 +6,9 @@ import base64
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
 import random
+from colorama import Fore, Style
+GREEN = Fore.GREEN
+PLAIN = Style.RESET_ALL
 
 rb = RubikaBot.rubika('wydswubheyliypmlxvzxcjrjrwlbcgaa')
 
@@ -124,8 +127,4 @@ data = {
 }
 
 res = rb.maker(data,"registerDevice")
-print("ok")
-
-
-
-
+print(f"{Style.BRIGHT}{GREEN}You logged in\n{PLAIN}")
