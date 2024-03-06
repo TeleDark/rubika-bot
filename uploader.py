@@ -57,9 +57,9 @@ def upload(data:dict):
     try:
         mode_send:str = data['mode']
         print(data)
-        file_name = (data['file_name'] if 'file_name' in data else None)
-        target_guid = (data['target'] if 'target' in data else None)
-        music_per = (data['music_per'] if 'music_per' in data else None)
+        file_name = (data['filename'] if 'filename' in data else None)
+        target_guid = (data['guid'] if 'guid' in data else None)
+        music_per = (data['singer'] if 'singer' in data else None)
         data_msg_id = data['data_msg_id']
         my_guid = data['t_guid']    
 
@@ -82,7 +82,7 @@ def upload(data:dict):
                 raise Exception('error in base http')
             
             if mode_send == 'music' and not music_per:
-                rb.send_message(my_guid,'برای ارسال آهنگ لازم است نام خواننده را هم وارد کنید\n برای مثال:\n music_per : Reza Bahram',data_msg_id)
+                rb.send_message(my_guid,'برای ارسال آهنگ لازم است نام خواننده را هم وارد کنید\n برای مثال:\n singer : Reza Bahram',data_msg_id)
                 return
             else: 
                 rb.send_message(my_guid,'درحال دانلود فایل از اینترنت ⬇️',data_msg_id)
@@ -145,7 +145,14 @@ def upload(data:dict):
         except:
             print("remove file error:", e)
         try:
-            rb.send_message(my_guid, f"نوع فایل رو اشتباه وارد کردید، لطفا از صحیح بودن mode فایل مطمئن شوید {e}",data_msg_id)
+            rb.send_message(my_guid, """
+لطفاً موارد زیر را بررسی فرمایید:
+
+1. صحت نوع فایل در آپشن mode
+2. پیامی که روی آن ریپلای شده است          
+3. صحت نگارشی آپشن‌های وارد شده:
+guid، mode، filename، singer
+""",data_msg_id)
         except:
             print("upload file error:", e)
         traceback.print_exc()

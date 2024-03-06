@@ -54,8 +54,35 @@ def on_message(message:dict,t_guid):
         _thread.start_new_thread(uploader.upload,(data,))
 
     elif msg_text.startswith('/start'):
-        rb.send_message(t_guid,"active ✅",reply=msg_id)
+        rb.send_message(t_guid,"""
+active ✅
 
+برای دیدن راهنما help/ را ارسال کنید""",reply=msg_id)
+    
+    elif msg_text.startswith('/help'):
+        rb.send_message(t_guid,"""
+به منظور استفاده از ربات، حتماً به برخی نکات توجه فرمایید:
+
+برای آپلود، در ابتدای پیام خود upload/ را ارسال نموده و پس از آن در خط بعدی، آپشن‌های مربوطه را به ربات اعلام کنید.
+
+توجه داشته باشید که برخی از آپشن‌ها اختیاری هستند، در حالی که برخی دیگر باید حتماً استفاده شوند.
+به عنوان مثال:
+
+آپشن mode برای تعیین نوع فایل استفاده می‌شود. حتماً مقدار این آپشن باید با توجه به نوع فایل شما مشخص گردد.
+
+انواع فایل : file, video, music, voice 
+مثال:
+mode : video
+
+آپشن guid یکی دیگر از آپشن‌های لازم برای آپلود است. در این آپشن، باید GUID کانال یا گروه مورد نظر برای آپلود فایل را وارد نمایید. به عنوان مثال:
+guid : c0Bx3EV0835316b092410e6b4bb4b70z
+
+در آپشن filename ، نام فایل مورد نظر را وارد کنید. اگر مود فایل شما file باشد، این نام به عنوان نام فایل در زمان ارسال ذخیره خواهد شد.
+
+آپشن singer نیز باید حتماً در صورتی که نوع فایل موزیک باشد، وارد شود و نام خواننده موزیک را در آن مشخص کنید.
+مثال:
+singer : Reza Bahram
+""",reply=msg_id)
 
 for chat in rb.get_chats():
     if chat['object_guid'] in my_guids:
@@ -74,8 +101,8 @@ while True:
                 if 'text' in msg and msg['text'] and len(msg['text']) > 0:
                     try:
                         on_message(msg,guid)
-                    except:
-                        rb.send_message(guid,'error',reply=msg['message_id'])
+                    except Exception as e:
+                        rb.send_message(guid,f'به گذاشتن : بعد از آپشن توجه کنید',reply=msg['message_id'])
                     time.sleep(5)
         except Exception as e:
             rb.send_message(guid,'لطفا از صحیح بودن GUID مطمئن شوید',reply=msg['message_id'])
