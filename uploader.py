@@ -56,7 +56,6 @@ def delete_empty(text:str):
 def upload(data:dict):
     try:
         mode_send:str = data['mode']
-        print(data)
         file_name = (data['filename'] if 'filename' in data else None)
         target_guid = (data['guid'] if 'guid' in data else None)
         music_per = (data['singer'] if 'singer' in data else None)
@@ -94,7 +93,7 @@ def upload(data:dict):
             rb.send_message(my_guid,'درحال دانلود فایل ⬇️',data_msg_id)
             file_size = rb.download(msg_file_data,file_name)
         else:
-            rb.send_message(my_guid,f'دانلود فایل با خطا مواجه شد !',data_msg_id)
+            rb.send_message(my_guid,f'دانلود فایل با خطا مواجه شد!',data_msg_id)
             raise Exception('file error')
         rb.send_message(my_guid,'درحال آپلود فایل ⬆️',data_msg_id)
         

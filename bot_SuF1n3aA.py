@@ -1,71 +1,61 @@
 import time
+import _thread
 from RubikaBot import rubika
 import uploader
-import _thread
 
 
 rb = rubika()
 
+def load_guids(file_path="./guids.txt"):
+    guids_dict = {}
 
-def delete_empty(text:str):
-    while text.endswith(" "):
-        text = text[:-1]
-    while text.startswith(" "):
-        text = text[1:]
-    return text
+    with open(file_path, "r") as f:
+        guids_content = f.read().replace("\r", "").split("\n")
 
+    for guid_line in guids_content:
+        guid_line = guid_line.strip()
+        if len(guid_line) > 20:
+            guids_dict[guid_line] = "1"
 
-my_guids = {
-    
-}
+    return guids_dict
 
-
-f= open("guids.txt","rb")
-r = f.read().decode()
-f.close()
+my_guids = load_guids()
 
 
-for i in r.replace("\r","").split("\n"):
-    if len(i) > 20:
-        i = delete_empty(i)
-        my_guids[i] = "1"
-
-
-def on_message(message:dict,t_guid):
-    msg_text:str = message["text"]
-    msg_text = msg_text.replace("\r","")
-    
+def on_message(message: dict, guid):
+    client_msg = message["text"].replace("\r", "")
     msg_id = message["message_id"]
+
+    if client_msg.startswith('/upload\n') and 'reply_to_message_id' not in message:
+        rb.send_message(guid, 'لطفاً روی فایل یا آدرس مورد نظر برای آپلود، ریپلای بزنید', reply=msg_id)
+        return
     
-    if msg_text.startswith('/upload\n'):
-        if 'reply_to_message_id' not in message:
-            rb.send_message(t_guid,'error !\nnot reply to file message !',reply=msg_id)
-            return
-        
-        msg_text = msg_text.split('\n')
-        del msg_text[0]
+    if client_msg.startswith('/upload\n'):
+        client_msg = client_msg.split('\n')[1:]
+
         data = {}
-        for i in msg_text:
-            i = i.split(' : ')
-            data[delete_empty(i[0])] = delete_empty(i[1])
-        data['t_guid'] = t_guid
+        for i in client_msg:
+            key, value = map(str.strip, i.split(':'))
+            data[key] = value
+
+        data['t_guid'] = guid
         data["data_msg_id"] = message['reply_to_message_id']
-        
         _thread.start_new_thread(uploader.upload,(data,))
 
-    elif msg_text.startswith('/start'):
-        rb.send_message(t_guid,"""
+    elif client_msg.startswith('/start'):
+        rb.send_message(guid,"""
 active ✅
 
 برای دیدن راهنما help/ را ارسال کنید""",reply=msg_id)
     
-    elif msg_text.startswith('/help'):
-        rb.send_message(t_guid,"""
-به منظور استفاده از ربات، حتماً به برخی نکات توجه فرمایید:
+    elif client_msg.startswith('/help'):
+        rb.send_message(guid,"""
+به منظور استفاده از ربات، حتما به برخی نکات توجه فرمایید:
 
 برای آپلود، در ابتدای پیام خود upload/ را ارسال نموده و پس از آن در خط بعدی، آپشن‌های مربوطه را به ربات اعلام کنید.
 
-توجه داشته باشید که برخی از آپشن‌ها اختیاری هستند، در حالی که برخی دیگر باید حتماً استفاده شوند.
+توجه داشته باشید که برخی از آپشن‌ها اختیاری هستند، در حالی که برخی دیگر باید حتما استفاده شوند.
+
 به عنوان مثال:
 
 آپشن mode برای تعیین نوع فایل استفاده می‌شود. حتماً مقدار این آپشن باید با توجه به نوع فایل شما مشخص گردد.
@@ -84,26 +74,40 @@ guid : c0Bx3EV0835316b092410e6b4bb4b70z
 singer : Reza Bahram
 """,reply=msg_id)
 
-for chat in rb.get_chats():
-    if chat['object_guid'] in my_guids:
-        my_guids[chat['object_guid']] = chat['last_message']['message_id']
+def process_chats():
+    for chat in rb.get_chats():
+        object_guid = chat['object_guid']
 
+        if object_guid in my_guids:
+            last_message = chat['last_message']
+            my_guids[object_guid] = last_message['message_id']
 
-while True:
-    time.sleep(5)
-    for guid in my_guids:
-        try:
-            msgs = rb.get_message(guid,to_max=True,min_id=my_guids[guid])
-            if len(msgs) > 0 and msgs[0]['message_id'] == my_guids[guid]:
-                del msgs[0]
-            for msg in msgs:
-                my_guids[guid] = msg['message_id']
-                if 'text' in msg and msg['text'] and len(msg['text']) > 0:
-                    try:
-                        on_message(msg,guid)
-                    except Exception as e:
-                        rb.send_message(guid,f'به گذاشتن : بعد از آپشن توجه کنید',reply=msg['message_id'])
+def check_messages():
+    while True:
+        time.sleep(5)
+
+        for guid, last_message_id in my_guids.items():
+            try:
+                msgs = rb.get_message(guid, to_max=True, min_id=last_message_id)
+
+                if msgs and msgs[0]['message_id'] == last_message_id:
+                    del msgs[0]
                     time.sleep(5)
-        except Exception as e:
-            rb.send_message(guid,'لطفا از صحیح بودن GUID مطمئن شوید',reply=msg['message_id'])
-            print('guid error: ',e)
+
+                for msg in msgs:
+                    my_guids[guid] = msg['message_id']
+
+                    if 'text' in msg and msg['text']:
+                        try:
+                            on_message(msg, guid)
+                            time.sleep(2)
+                        except Exception as e:
+                            rb.send_message(guid, 'به گذاشتن : بعد از آپشن توجه کنید', reply=msg['message_id'])
+            except Exception as e:
+                rb.send_message(guid, 'لطفا از صحیح بودن GUID مطمئن شوید', reply=msg['message_id'])
+                print('guid error: ', e)
+
+#  process_chats
+process_chats()
+# check messages if new....
+check_messages()
