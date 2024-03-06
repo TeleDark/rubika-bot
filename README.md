@@ -51,7 +51,7 @@ guid : GUID
 
 ##### You should enter the file name along with its format. This option is necessary when your file source is a link. When your source is a forwarded file, meaning you forwarded a file to the bot, this option is optional
 ```
-file_name : example.mp4
+filename : example.mp4
 ```
 
 ##### This option is the name of the singer. It is required when uploading music
