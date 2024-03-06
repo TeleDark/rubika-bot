@@ -1,15 +1,23 @@
 import os
 from colorama import Fore, Style
+
 GREEN= Fore.GREEN
 PLAIN = Style.RESET_ALL
 
-file_name = None
-for i in os.listdir():
-    if i.endswith(".py") and i.startswith("bot_"):
-        file_name = i
-        break
+def find_bot_file():
+    for file in os.listdir():
+        if file.endswith(".py") and file.startswith("bot_"):
+            return file
+    return None
 
-os.popen('nohup python3 -u '+file_name +
-         ' > log.txt 2> /dev/null &')
+def start_bot(file_name):
+    os.popen(f'nohup python3 -u {file_name} > log.txt 2> /dev/null &')
 
-print(f"{Style.BRIGHT}{GREEN}The bot has been Started{PLAIN}")
+def main():
+    file_name = find_bot_file()
+    if file_name:
+        start_bot(file_name)
+        print(f"{Style.BRIGHT}{GREEN}The bot has been started{PLAIN}")
+
+if __name__ == "__main__":
+    main()
