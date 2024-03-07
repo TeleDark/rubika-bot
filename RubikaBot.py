@@ -1,59 +1,69 @@
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
-from json import loads,dumps
-import base64 , requests , random
-from requests import session
-import time
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto.Signature import PKCS1_v1_5
+from requests import session
 import json
+import base64
+import random
+import requests
+import time
 import os
 
-
-rubika_client = {"app_name":"Main","app_version":"3.3.3","temp_code":"12","lang_code":"fa","package":"app.rbmain.a","platform":"Android"}
-
+RUBIKA_CLIENT = {"app_name": "Main", "app_version": "3.3.3", "temp_code": "12", "lang_code": "fa", "package": "app.rbmain.a", "platform": "Android"}
 
 class rubika:
     def __init__(self,auth=None):
-        
-        def replaceCharAt(e, t, i):
+        self.auth = auth
+
+        def replace_char_at(e, t, i):
             return e[0:t] + i + e[t + len(i):]
+        
         def secret(e):
             t = e[0:8]
             i = e[8:16]
             n = e[16:24] + t + e[24:32] + i
             s = 0
+
             while s < len(n):
-                e = n[s]
-                if e >= '0' and e <= '9':
-                    t = chr((ord(e[0]) - ord('0') + 5) % 10 + ord('0'))
-                    n = replaceCharAt(n, s, t)
+                char = n[s]
+                if '0' <= char <= '9':
+                    replacement = chr((ord(char) - ord('0') + 5) % 10 + ord('0'))
+                    n = replace_char_at(n, s, replacement)
                 else:
-                    t = chr((ord(e[0]) - ord('a') + 9) % 26 + ord('a'))
-                    n = replaceCharAt(n, s, t)
+                    replacement = chr((ord(char) - ord('a') + 9) % 26 + ord('a'))
+                    n = replace_char_at(n, s, replacement)
                 s += 1
             return n
         
-        self.auth = auth
+        
         if not auth:
-            f = open("account","rb")
-            self.account = json.loads(f.read().decode())
-            f.close()
-            self.auth = self.account['auth']
+            try:
+                with open("account", "rb") as f:
+                    self.account = json.loads(f.read().decode())
+                self.auth = self.account.get('auth', None)
+            except FileNotFoundError:
+                print("Account file not found.")
+            except json.JSONDecodeError:
+                print("Error decoding JSON from the account file.")
+
         self.aes_key = bytearray(secret(self.auth), "UTF-8")
         self.aes_iv = bytearray.fromhex('00000000000000000000000000000000')
-    def encrypt(self, text:str):
+    
+    def encrypt(self, text: str) -> str:
         raw = pad(text.encode('UTF-8'), AES.block_size)
         aes = AES.new(self.aes_key, AES.MODE_CBC, self.aes_iv)
         enc = aes.encrypt(raw)
         result = base64.b64encode(enc).decode('UTF-8')
         return result
-    def decrypt(self, text:str):
+    
+    def decrypt(self, text:str) -> str:
         aes = AES.new(self.aes_key, AES.MODE_CBC, self.aes_iv)
         dec = aes.decrypt(base64.urlsafe_b64decode(text.encode('UTF-8')))
         result = unpad(dec, AES.block_size).decode('UTF-8')
         return result
+    
     def encode_char(self,input_str:str):
         output = ""
         for i in input_str:
@@ -67,28 +77,32 @@ class rubika:
                 c = i
             output += c
         return output
+    
     def sign_data(self,data_enc:str):
         private_key = self.account['private_key'].encode()
         private_key = RSA.importKey(private_key)
         signer = PKCS1_v1_5.new(private_key)
         signature = signer.sign(SHA256.new(data_enc.encode()))
         return base64.encodebytes(signature).decode().replace('\n',"")
+    
     def maker(self,data:dict,method:str):
         js = {
-            "method":method,"input":data,
-            "client":rubika_client
+            "method": method,"input":data,
+            "client": RUBIKA_CLIENT
         }
-        data_enc = self.encrypt(dumps(js))
+        data_enc = self.encrypt(json.dumps(js))
         js = {
             "auth":self.encode_char(self.auth),
             "data_enc":data_enc,
             "sign":self.sign_data(data_enc),
             "api_version":"6"
         }
+
         response:str = self.send_req(json=js)
         data_enc = response["data_enc"]
-        data_json = loads(self.decrypt(data_enc))
+        data_json = json.loads(self.decrypt(data_enc))
         return data_json['data']
+    
     def send_req(self,json:dict,looop=1):
         headers = {
             "Accept":None,
@@ -116,11 +130,13 @@ class rubika:
                     time.sleep(5)
                     return self.send_req(json=json,looop=(looop+1))
         return result
+    
     def _requestSendFile(self,file_name:str,size:int) -> dict:
         if size > 5000000:
             size = 5000000
         res = self.maker({"size":size,"mime":file_name.split('.')[-1],"file_name":file_name},"requestSendFile")
         return res
+    
     def send_document(self,chat_token:str,upload_data,file_size,file_name:str):
         file_inline = {
             "dc_id":upload_data["dc_id"],
@@ -137,9 +153,11 @@ class rubika:
             "rnd":str(random.randint(10000,99999))
         }
         return self.maker(json,"sendMessage")
+    
     def get_message_by_id(self,chat_token,message_id):
         js = {"message_ids":message_id,"object_guid":chat_token}
         return self.maker(js,"getMessagesByID")['messages']
+    
     def send_video(self,chat_token,upload_data,file_name,height,width,size,thumb_inline,duration_sec):
         file_inline = {
             "access_hash_rec":upload_data["hash_rec"],
@@ -161,6 +179,7 @@ class rubika:
             "rnd":str(random.randint(10000,99999))
         }
         return self.maker(json,"sendMessage")
+    
     def send_music(self,chat_token,duration_sec,upload_data,file_size,file_name,music_performer):
         file_inline = {
             "access_hash_rec":upload_data["hash_rec"],
@@ -182,6 +201,7 @@ class rubika:
             "rnd":str(random.randint(10000,99999))
         }
         self.maker(json,"sendMessage")
+
     def send_message(self,chat_token,text,reply):
         js = {
             "text":text,
@@ -191,21 +211,29 @@ class rubika:
         if reply:
             js['reply_to_message_id'] = reply
         return self.maker(js,"sendMessage")
+    
     def get_message(self,chat_token,to_max:bool=False,to_main:bool=False,min_id:str="0",max_id:str="0",limit:int=50):
         js = {"object_guid":chat_token,"limit":limit,"min_id":min_id,"max_id":max_id}
         if to_max:js["sort"] = "FromMin"
         elif to_main:js["sort"] = "FromMax"
         msgss = self.maker(js,"getMessages")['messages']
         return msgss
+    
     def forward_messages(self,from_chat_token,target_token,message_ids:list[str]):
         js = {"from_object_guid":from_chat_token,"message_ids": message_ids,"rnd":str(random.randint(100000,900000)),"to_object_guid": target_token}
         return self.maker(js,"forwardMessages")
+    
     def get_chats(self):
         res = self.maker({},"getChats")
         return res['chats']
-    def edit_message(self,chat_token,message_id,new_text):
-        js = {"text":new_text,"object_guid":chat_token,"message_id":message_id}
-        return self.maker(js,"editMessage")
+    
+    def edit_message(self,chat_token,new_text, message_id):
+        try:
+            js = {"text":new_text,"object_guid":chat_token,"message_id":message_id}
+            return self.maker(js,"editMessage")
+        except Exception as e:
+            print(f"edit {e}")
+    
     def send_voice(self,chat_token:str,upload_data,file_name,file_size,duration_sec):
         file_inline = {
             "access_hash_rec":upload_data["hash_rec"],
@@ -226,6 +254,7 @@ class rubika:
             "rnd":str(random.randint(10000,99999))
         }
         self.maker(json,"sendMessage")
+
     def download(self,file_data,file_name) -> bytes:
         download_url = "https://messenger"+str(file_data["dc_id"])+".iranlms.ir/GetFile.ashx"
         file_size = int(file_data['size'])
@@ -270,6 +299,7 @@ class rubika:
                 time.sleep(3)
         file_stream.close()
         return file_size
+    
     def upload_file(self,file_name:str):
         file_size = os.path.getsize(file_name)
         file_stream = open(file_name,"rb")

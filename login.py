@@ -16,7 +16,7 @@ rb = RubikaBot.rubika('wydswubheyliypmlxvzxcjrjrwlbcgaa')
 def send(data,method):
     js = {
         "method":method,"input":data,
-        "client":RubikaBot.rubika_client
+        "client":RubikaBot.RUBIKA_CLIENT
     }
     js = {
         "tmp_session":rb.auth,

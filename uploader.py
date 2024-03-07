@@ -73,15 +73,28 @@ def delete_empty(text: str) -> str:
 
 
 def upload(data: dict):
+    file_type = [
+            'music',
+            'voice',
+            'video',
+            'file',
+        ]
     try:
-        mode_send = data.get('mode', '')
-        file_name = data.get('filename', None)
-        target_guid = data.get('guid', None)
-        music_per = data.get('singer', None)
+        mode_send = data.get('mode')
+        target_guid = data.get('guid')
+        file_name = data.get('filename')
+        music_per = data.get('singer')
         data_msg_id = data['data_msg_id']
         my_guid = data['t_guid']
+        
+        if target_guid is None:
+            rb.send_message(my_guid, 'لطفا از صحت نگارش guid مقصد مطمئن شوید', data_msg_id)
+            return
 
-
+        if mode_send is None or mode_send not in file_type:
+            rb.send_message(my_guid, 'لطفا از صحت نگارش mode و یا مقدار آن اطمینان حاصل کنید.', data_msg_id)
+            return
+        
         data_msg = rb.get_message_by_id(my_guid, [data_msg_id])[0]
         data_text = str(data_msg.get('text', ''))
         
@@ -96,7 +109,7 @@ def upload(data: dict):
                 return
             
             else: 
-                rb.send_message(my_guid, 'درحال دانلود فایل از اینترنت ⬇️', data_msg_id)
+                replay_msg = rb.send_message(my_guid, 'درحال دانلود فایل از اینترنت ⬇️', data_msg_id)
                 http.download(file_name)
 
         elif 'file_inline' in data_msg:
@@ -105,15 +118,17 @@ def upload(data: dict):
             if not file_name:
                 file_name = msg_file_data['file_name']
 
-            rb.send_message(my_guid, 'درحال دانلود فایل ⬇️', data_msg_id)
-            file_size = rb.download(msg_file_data,file_name)
+            replay_msg = rb.send_message(my_guid, "درحال دانلود فایل ⬇️", data_msg_id)
+            repey_msg_id = replay_msg['message_update']['message_id']
             
+            file_size = rb.download(msg_file_data,file_name)
+
         else:
-            rb.send_message(my_guid, 'دانلود فایل با خطا مواجه شد!', data_msg_id)
+            rb.edit_message(my_guid, 'دانلود فایل با خطا مواجه شد!', data_msg_id)
             raise Exception('File error')
 
         try:
-            rb.send_message(my_guid, 'درحال آپلود فایل ⬆️', data_msg_id)
+            rb.edit_message(my_guid, 'درحال آپلود فایل ⬆️', repey_msg_id)
             upload_data = rb.upload_file(file_name)
 
             handlers = {
@@ -158,10 +173,10 @@ def upload(data: dict):
                     handler(target_guid, upload_data, file_size, file_name)
 
                 os.remove(file_name)
-                rb.send_message(my_guid, f'{mode_send.capitalize()} ارسال شد ✅', data_msg_id)
+                rb.edit_message(my_guid, f'{mode_send.capitalize()} ارسال شد ✅', repey_msg_id)
 
             else:
-                rb.send_message(my_guid, "از صحت نوع فایل در آپشن mode اطمینان حاصل کنید.", data_msg_id)
+                rb.edit_message(my_guid, "از صحت نوع فایل در آپشن mode اطمینان حاصل کنید.", repey_msg_id)
             
         except Exception as e:
             print(f"Error in handling {mode_send}: {e}")
@@ -173,14 +188,14 @@ def upload(data: dict):
             print(f"Remove file error: {remove_error}")
         
         print(f"Error in upload: {e}")
-        rb.send_message(my_guid, """
+        rb.edit_message(my_guid, """
 لطفاً موارد زیر را بررسی فرمایید:
 
 1. صحت نوع فایل در آپشن mode
 2. پیامی که روی آن ریپلای شده است          
 3. صحت نگارشی آپشن‌های وارد شده:
 guid، mode، filename، singer
-""",data_msg_id)
+""",repey_msg_id)
 
     finally:
         if os.path.isfile(file_name):
