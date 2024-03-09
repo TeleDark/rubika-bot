@@ -110,6 +110,8 @@ def upload(data: dict):
             
             else: 
                 replay_msg = rb.send_message(my_guid, 'درحال دانلود فایل از اینترنت ⬇️', data_msg_id)
+                repey_msg_id = replay_msg['message_update']['message_id']
+
                 http.download(file_name)
 
         elif 'file_inline' in data_msg:
@@ -195,7 +197,7 @@ def upload(data: dict):
 2. پیامی که روی آن ریپلای شده است          
 3. صحت نگارشی آپشن‌های وارد شده:
 guid، mode، filename، singer
-""",repey_msg_id)
+""",data_msg_id)
 
     finally:
         if os.path.isfile(file_name):
