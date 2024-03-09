@@ -11,6 +11,10 @@ import time
 import os
 
 RUBIKA_CLIENT = {"app_name": "Main", "app_version": "3.3.3", "temp_code": "12", "lang_code": "fa", "package": "app.rbmain.a", "platform": "Android"}
+ONE_KB = 1024
+ONE_MB = ONE_KB * 1024
+ONE_GB = ONE_MB * 1024
+ONE_TB = ONE_GB * 1024
 
 class rubika:
     def __init__(self,auth=None):
@@ -79,6 +83,16 @@ class rubika:
 
         return output
     
+    def sizeFormat(self, size):
+        if (size < ONE_KB):
+            return "{:.0f}".format(size) + " بایت"
+        elif (size < ONE_MB):
+            return "{:.0f}".format(size / ONE_KB) + " کیلوبایت"
+        elif (size < ONE_GB):
+            return "{:.2f}".format(size / ONE_MB) + " مگابایت"
+        elif (size < ONE_TB):
+            return "{:.2f}".format(size / ONE_GB) + " گیگابایت"    
+
     def sign_data(self,data_enc:str):
         private_key = self.account['private_key'].encode()
         private_key = RSA.importKey(private_key)

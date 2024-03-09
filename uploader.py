@@ -2,7 +2,6 @@ import os
 import io
 import cv2
 import base64
-import traceback
 from PIL import Image
 from request import HTTPrequest
 from RubikaBot import rubika
@@ -97,7 +96,7 @@ def upload(data: dict):
         
         data_msg = rb.get_message_by_id(my_guid, [data_msg_id])[0]
         data_text = str(data_msg.get('text', ''))
-        
+
         if data_text and delete_empty(data_text).startswith("http") and 'file_inline' not in data_msg:
             http = HTTPrequest(data_text)
             file_size = http.buffer_size
@@ -108,23 +107,24 @@ def upload(data: dict):
                 rb.send_message(my_guid, 'برای ارسال آهنگ لازم است نام خواننده را هم وارد کنید\n برای مثال:\n singer : Reza Bahram', data_msg_id)
                 return
             
-            else: 
-                replay_msg = rb.send_message(my_guid, 'درحال دانلود فایل از اینترنت ⬇️', data_msg_id)
+            else:
+                size_format_file = rb.sizeFormat(file_size)
+                replay_msg = rb.send_message(my_guid, f'درحال دانلود فایل از اینترنت ⬇️\nحجم فایل: {size_format_file}', data_msg_id)
                 repey_msg_id = replay_msg['message_update']['message_id']
 
                 http.download(file_name)
 
         elif 'file_inline' in data_msg:
-            msg_file_data = data_msg['file_inline']
-
+            msg_file_data = data_msg['file_inline']    
             if not file_name:
                 file_name = msg_file_data['file_name']
 
-            replay_msg = rb.send_message(my_guid, "درحال دانلود فایل ⬇️", data_msg_id)
-            repey_msg_id = replay_msg['message_update']['message_id']
-            
-            file_size = rb.download(msg_file_data,file_name)
+            size_format_file = rb.sizeFormat(msg_file_data['size'])
 
+            replay_msg = rb.send_message(my_guid, f"درحال دانلود فایل ⬇️\nحجم فایل: {size_format_file}", data_msg_id)
+            repey_msg_id = replay_msg['message_update']['message_id']
+                  
+            file_size = rb.download(msg_file_data, file_name)
         else:
             rb.edit_message(my_guid, 'دانلود فایل با خطا مواجه شد!', data_msg_id)
             raise Exception('File error')
@@ -190,7 +190,7 @@ def upload(data: dict):
             print(f"Remove file error: {remove_error}")
         
         print(f"Error in upload: {e}")
-        rb.edit_message(my_guid, """
+        rb.send_message(my_guid, """
 لطفاً موارد زیر را بررسی فرمایید:
 
 1. صحت نوع فایل در آپشن mode
