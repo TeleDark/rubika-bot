@@ -2,6 +2,7 @@ import os
 import io
 import cv2
 import base64
+import random
 from PIL import Image
 from request import HTTPrequest
 from RubikaBot import rubika
@@ -85,7 +86,11 @@ def upload(data: dict):
         music_per = data.get('singer')
         data_msg_id = data['data_msg_id']
         my_guid = data['t_guid']
+        caption = data.get('caption')
         
+        
+        rand_int = random.randint(1, 100)
+        file_name_tmp = f"{rand_int}-{file_name}"
         if target_guid is None:
             rb.send_message(my_guid, 'لطفا از صحت نگارش guid مقصد مطمئن شوید', data_msg_id)
             return
@@ -112,7 +117,7 @@ def upload(data: dict):
                 replay_msg = rb.send_message(my_guid, f'درحال دانلود فایل از اینترنت ⬇️\nحجم فایل: {size_format_file}', data_msg_id)
                 repey_msg_id = replay_msg['message_update']['message_id']
 
-                http.download(file_name)
+                http.download(file_name_tmp)
 
         elif 'file_inline' in data_msg:
             msg_file_data = data_msg['file_inline']    
@@ -124,14 +129,14 @@ def upload(data: dict):
             replay_msg = rb.send_message(my_guid, f"درحال دانلود فایل ⬇️\nحجم فایل: {size_format_file}", data_msg_id)
             repey_msg_id = replay_msg['message_update']['message_id']
                   
-            file_size = rb.download(msg_file_data, file_name)
+            file_size = rb.download(msg_file_data, file_name_tmp)
         else:
             rb.edit_message(my_guid, 'دانلود فایل با خطا مواجه شد!', data_msg_id)
             raise Exception('File error')
 
         try:
-            rb.edit_message(my_guid, 'درحال آپلود فایل ⬆️', repey_msg_id)
-            upload_data = rb.upload_file(file_name)
+            rb.edit_message(my_guid, f'درحال آپلود فایل ⬆️\nحجم فایل: {size_format_file}', repey_msg_id)
+            upload_data = rb.upload_file(file_name_tmp)
 
             handlers = {
                 'music': rb.send_music,
@@ -147,17 +152,17 @@ def upload(data: dict):
                     if 'file_inline' in data_msg and msg_file_data['type'] != "File":
                         music_time = msg_file_data['time']
                     else:
-                        music_time = get_music_time(file_name)
+                        music_time = get_music_time(file_name_tmp)
             
-                    handler(target_guid, music_time, upload_data, file_size, file_name, music_per)
+                    handler(target_guid, music_time, upload_data, file_size, file_name, music_per, caption)
 
                 elif mode_send == 'voice':
                     if 'file_inline' in data_msg and msg_file_data['type'] != "File":
                         music_time = msg_file_data['time']
                     else:
-                        music_time = get_music_time(file_name)*1000
+                        music_time = get_music_time(file_name_tmp)*1000
 
-                    handler(target_guid,upload_data,file_name,file_size,music_time)
+                    handler(target_guid,upload_data,file_name,file_size,music_time, caption)
 
                 elif mode_send == 'video':
                     if 'file_inline' in data_msg and msg_file_data['type'] != "File":
@@ -166,15 +171,15 @@ def upload(data: dict):
                         height = msg_file_data['height']
                         duration = int(msg_file_data['time']/1000)
                     else:
-                        duration, height , width , thumb_bytes = get_video_data(file_name)
+                        duration, height , width , thumb_bytes = get_video_data(file_name_tmp)
                         thumb_str = base64.encodebytes(thumb_bytes).decode()
 
-                    handler(target_guid,upload_data,file_name,height,width,file_size,thumb_str,duration)
+                    handler(target_guid,upload_data,file_name,height,width,file_size,thumb_str,duration,caption)
 
                 else: # file upload
-                    handler(target_guid, upload_data, file_size, file_name)
+                    handler(target_guid, upload_data, file_size, file_name,caption)
 
-                os.remove(file_name)
+                os.remove(file_name_tmp)
                 rb.edit_message(my_guid, f'{mode_send.capitalize()} ارسال شد ✅', repey_msg_id)
 
             else:
@@ -185,7 +190,7 @@ def upload(data: dict):
 
     except Exception as e:
         try:
-            os.remove(file_name)
+            os.remove(file_name_tmp)
         except Exception as remove_error:
             print(f"Remove file error: {remove_error}")
         
@@ -200,5 +205,5 @@ guid، mode، filename، singer
 """,data_msg_id)
 
     finally:
-        if os.path.isfile(file_name):
-            os.remove(file_name)
+        if os.path.isfile(file_name_tmp):
+            os.remove(file_name_tmp)

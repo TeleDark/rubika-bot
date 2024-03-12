@@ -34,10 +34,24 @@ def on_message(message: dict, guid):
         client_msg = client_msg.split('\n')[1:]
 
         data = {}
+        is_caption = False
+        caption_value = ''
         for i in client_msg:
-            key, value = map(str.strip, i.split(':'))
-            data[key] = value
+            if not is_caption and i == '':
+                continue
+            
+            if 'caption' in i.lower():
+                caption_value = i.split(":")[1].strip()+"\n"
+                is_caption = True
 
+            elif is_caption:
+                caption_value += i.strip()+"\n"
+
+            else:
+                key, value = map(str.strip, i.split(':'))
+                data[key] = value
+
+        data['caption'] = caption_value
         data['t_guid'] = guid
         data["data_msg_id"] = message['reply_to_message_id']
         _thread.start_new_thread(uploader.upload,(data,))

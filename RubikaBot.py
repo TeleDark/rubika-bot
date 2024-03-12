@@ -160,7 +160,7 @@ class rubika:
         res = self.maker({"size": size, "mime": file_name.split('.')[-1], "file_name": file_name}, "requestSendFile")
         return res
     
-    def send_document(self, chat_token: str, upload_data, file_size, file_name: str):
+    def send_document(self, chat_token: str, upload_data, file_size, file_name: str, caption=None):
         file_inline = {
             "dc_id": upload_data["dc_id"],
             "file_id": str(upload_data["id"]),
@@ -177,13 +177,16 @@ class rubika:
             "rnd": str(random.randint(10000,99999))
         }
 
+        if caption:
+            request_data['text'] = caption
+
         return self.maker(request_data, "sendMessage")
     
     def get_message_by_id(self, chat_token, message_id):
         request_data = {"message_ids": message_id,"object_guid": chat_token}
         return self.maker(request_data, "getMessagesByID")['messages']
     
-    def send_video(self, chat_token, upload_data, file_name, height, width, size, thumb_inline, duration_sec):
+    def send_video(self, chat_token, upload_data, file_name, height, width, size, thumb_inline, duration_sec, caption=None):
         
         file_inline = {
             "access_hash_rec": upload_data["hash_rec"],
@@ -206,10 +209,13 @@ class rubika:
             "rnd": str(random.randint(10000, 99999))
         }
 
+        if caption:
+            request_data['text'] = caption
+
         return self.maker(request_data, "sendMessage")
     
 
-    def send_music(self,chat_token,duration_sec,upload_data,file_size,file_name,music_performer):
+    def send_music(self,chat_token,duration_sec,upload_data,file_size,file_name,music_performer, caption=None):
         file_inline = {
             "access_hash_rec": upload_data["hash_rec"],
             "auto_play": False,
@@ -230,6 +236,35 @@ class rubika:
             "object_guid": chat_token,
             "rnd": str(random.randint(10000, 99999))
         }
+
+        if caption:
+            request_data['text'] = caption
+
+        self.maker(request_data,"sendMessage")
+
+
+    def send_voice(self, chat_token: str, upload_data, file_name, file_size, duration_sec, caption=None):
+        file_inline = {
+            "access_hash_rec": upload_data["hash_rec"],
+            "auto_play": False,
+            "dc_id": upload_data["dc_id"],
+            "file_id": str(upload_data["id"]),
+            "file_name": file_name,
+            "height": 0,
+            "mime": "mp3",
+            "size": file_size,
+            "time": duration_sec,
+            "type": "Voice",
+            "width": 0
+        }
+        request_data = {
+            "file_inline": file_inline,
+            "object_guid": chat_token,
+            "rnd": str(random.randint(10000, 99999))
+        }
+
+        if caption:
+            request_data['text'] = caption
 
         self.maker(request_data,"sendMessage")
 
@@ -290,27 +325,6 @@ class rubika:
         except Exception as e:
             print(f"edit {e}")
     
-    def send_voice(self, chat_token: str, upload_data, file_name, file_size, duration_sec):
-        file_inline = {
-            "access_hash_rec": upload_data["hash_rec"],
-            "auto_play": False,
-            "dc_id": upload_data["dc_id"],
-            "file_id": str(upload_data["id"]),
-            "file_name": file_name,
-            "height": 0,
-            "mime": "mp3",
-            "size": file_size,
-            "time": duration_sec,
-            "type": "Voice",
-            "width": 0
-        }
-        request_data = {
-            "file_inline": file_inline,
-            "object_guid": chat_token,
-            "rnd": str(random.randint(10000, 99999))
-        }
-
-        self.maker(request_data,"sendMessage")
 
     def download(self, file_data, file_name) -> bytes:
         download_url = f"https://messenger{file_data['dc_id']}.iranlms.ir/GetFile.ashx"
