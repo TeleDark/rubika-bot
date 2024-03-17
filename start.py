@@ -11,7 +11,7 @@ def find_bot_file():
     return None
 
 def start_bot(file_name):
-    os.popen(f'nohup python3 -u {file_name} > log.txt 2> /dev/null &')
+    os.popen(f'nohup python3 -u {file_name} > log.txt 2> error.log &')
 
 def main():
     file_name = find_bot_file()
