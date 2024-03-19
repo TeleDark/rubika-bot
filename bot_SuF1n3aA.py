@@ -127,7 +127,7 @@ def check_messages():
                         except Exception as e:
                             rb.send_message(guid, 'به گذاشتن : بعد از آپشن توجه کنید', reply=msg['message_id'])
             except Exception as e:
-                rb.send_message(guid, 'لطفا از صحیح بودن GUID مطمئن شوید', reply=msg['message_id'])
+                rb.send_message(guid, 'لطفا از صحیح بودن GUID مطمئن شوید', reply=last_message_id)
                 print('guid error: ', e)
 
 #  process_chats
