@@ -137,6 +137,7 @@ class rubika:
         }
 
         for _ in range(max_attempts):
+            result = ''
             try:
                 response = requests.post('https://messengerg2c63.iranlms.ir',json=json_data, headers=headers, timeout=10)
                 if response.status_code == 200:
